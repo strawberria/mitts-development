@@ -15,7 +15,7 @@ export async function sleep(duration: number) {
     return new Promise(r => setTimeout(r, duration));
 }
 
-export const version = "1.7.1";
+export const version = "1.7.2";
 export const idLength = 8;
 export const playStore: Writable<boolean> = writable(false);
 export const stateStore: Writable<string | undefined> = writable<string>(undefined);

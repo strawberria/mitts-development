@@ -32,7 +32,8 @@
     $: {
         $projectStore.storage.states;
         // Don't allow changing back to opening state? I dunno
-        stateChoiceData = Object.values($projectStore.storage.states.data)
+        stateChoiceData = $projectStore.storage.states.ordering
+            .map(id => $projectStore.storage.states.data[id])
             // .filter(data => data.type !== "opening")
             .map(data => {
                 return { key: data.id, display: data.title, enabled: true };

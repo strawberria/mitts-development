@@ -25,9 +25,9 @@
     console.log(`[RUN] Found starting state: [${startingStateID} - ${startingStateData.title}]`);
 
     // Find and set initial minimap location and restraints - reset here when restarting
-    const initialMinimapLocation = Object.values(gameData.storage.states.data[startingStateID].locations.data)
-        .map(v => v.id)[0];
-    const initialRestraintIDs = Object.values(gameData.data.restraintLocations.data)
+    const initialMinimapLocation = gameData.storage.states.data[startingStateID].locations.ordering[0];
+    const initialRestraintIDs = gameData.data.restraintLocations.ordering
+        .map(id => gameData.data.restraintLocations.data[id])
         .map(v => v.initial).filter(v => v !== "");
     for(const initialRestraintID of initialRestraintIDs) {
         const initialRestraintData = gameData.storage.restraints.data[initialRestraintID];
@@ -119,7 +119,8 @@
         console.log(`[RUN] handleMinimapClick - click coordinates (${clickCoordX} / ${boundingRect.width}, ${clickCoordY} / ${boundingRect.height})`);
 
         // Iterate over minimap objects, drawing paths and checking inclusion
-        for(const minimapObjectData of Object.values(gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapObjects.data)) {
+        for(const minimapObjectData of gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapObjects.ordering
+            .map(id => gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapObjects.data[id])) {
             const path = new Path2D();
             if(minimapObjectData.type === "vector" 
                 && minimapObjectData.args[0] !== undefined && minimapObjectData.args[1] !== undefined) {
@@ -530,7 +531,8 @@
                                 text-slate-300 bg-slate-800
                                 block w-1/2 pl-2 pr-2 pt-1 pb-1`}
                             bind:value={$runtimeStore.currentMinimapLocationID}>
-                            {#each Object.values(gameData.storage.states.data[$runtimeStore.currentStateID].locations.data) as minimapLocationData}
+                            {#each gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering
+                                .map(id => gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[id]) as minimapLocationData}
                                 <option class="text-slate-300"
                                     value={minimapLocationData.id}>
                                     {minimapLocationData.name}

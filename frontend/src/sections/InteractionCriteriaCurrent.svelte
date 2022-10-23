@@ -22,8 +22,9 @@
     let restraintChoiceData: ChoiceData<string>[] = [];
     $: {
         $projectStore.storage.restraints;
-        restraintChoiceData = Object.values($projectStore.storage.restraints.data)
-            .map(data => {
+        restraintChoiceData = $projectStore.storage.restraints.ordering
+            .map(id => {
+                const data = $projectStore.storage.restraints.data[id];
                 return { key: data.id, display: data.devName, enabled: true };
             });
     }
@@ -31,8 +32,9 @@
     let objectChoiceData: ChoiceData<string>[] = [];
     $: {
         $projectStore.storage.objects;
-        objectChoiceData = Object.values($projectStore.storage.objects.data)
-            .map(data => {
+        objectChoiceData = $projectStore.storage.objects.ordering
+            .map(id => {
+                const data = $projectStore.storage.objects.data[id];
                 return { key: data.id, display: data.devName, enabled: true };
             });
     }

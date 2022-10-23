@@ -10,8 +10,9 @@
     let actionsChoiceData: ChoiceData<string>[] = [];
     $: {
         $projectStore.data.actions;
-        actionsChoiceData = Object.values($projectStore.data.actions.data)
-            .map(data => {
+        actionsChoiceData = $projectStore.data.actions.ordering
+            .map(id => {
+                const data = $projectStore.data.actions.data[id];
                 return { key: data.id, display: data.name, enabled: true };
             });
     }
@@ -22,18 +23,21 @@
         $projectStore.storage.objects;
         componentsChoiceData = [
             { key: "", display: "", enabled: true},
-            ...Object.values($projectStore.data.restraintLocations.data)
-                .map(data => {
+            ...($projectStore.data.restraintLocations.ordering)
+                .map(id => {
+                    const data = $projectStore.data.restraintLocations.data[id];
                     return { key: data.id, display: `(L) ${data.name}`, enabled: true };
-                }), // Targetable restraints first
-            ...Object.values($projectStore.storage.restraints.data)
-                .map(data => {
-                    return { key: data.id, display: `(R) ${data.devName}`, enabled: true };
-                }), // Targetable restraints first
-            ...Object.values($projectStore.storage.objects.data)
-                .map(data => {
+                }),
+            ...($projectStore.storage.restraints.ordering)
+                .map(id => {
+                    const data = $projectStore.storage.restraints.data[id];
+                    return { key: data.id, display: `(L) ${data.devName}`, enabled: true };
+                }),
+            ...($projectStore.storage.objects.ordering)
+                .map(id => {
+                    const data = $projectStore.storage.objects.data[id];
                     return { key: data.id, display: `(O) ${data.devName}`, enabled: true };
-                }), // Then componentable objects (using DEVELOPMENT name)
+                }),
         ];
     }
 

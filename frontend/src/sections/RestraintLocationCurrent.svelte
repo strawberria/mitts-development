@@ -1,7 +1,7 @@
 <script lang="ts">
     import LabelTextInput from "../components/LabelTextInput.svelte";
     import FormGrouping from "../components/FormGrouping.svelte";
-    import { ChoiceData, projectStore } from "../miscellaneous";
+    import { ChoiceData, ProjectRestraintData, projectStore } from "../miscellaneous";
     import LabelSelect from "../components/LabelSelect.svelte";
 
     export let selectedLocationID: string;
@@ -11,11 +11,15 @@
         $projectStore.storage.restraints;   
         restraintsChoiceData = [
             { key: "", display: "", enabled: true },
-            ...Object.values($projectStore.storage.restraints.data)
-                .filter(data => data.location === selectedLocationID)
-                .map(data => {
-                    return { key: data.id, display: `${data.devName}`, enabled: true };
-                }), 
+            ...($projectStore.storage.restraints.ordering)
+            .filter(id => {
+                const data = $projectStore.storage.restraints.data[id];
+                return data.location === selectedLocationID;
+            }) // Yes it's redundant, no I don't care
+            .map(id => {
+                const data = $projectStore.storage.restraints.data[id];
+                return { key: data.id, display: data.devName, enabled: true };
+            })
         ]
     }
 </script>

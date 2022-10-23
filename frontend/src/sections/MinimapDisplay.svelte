@@ -36,10 +36,11 @@
         $projectStore.storage.objects;
         objectsChoiceData = [
             { key: "", display: "", enabled: true},
-            ...Object.values($projectStore.storage.objects.data)
-                .map(data => {
-                    return { key: data.id, display: data.devName, enabled: true };
-                }), 
+            ...$projectStore.storage.objects.ordering
+            .map(id => {
+                const data = $projectStore.storage.objects.data[id];
+                return { key: data.id, display: data.devName, enabled: true };
+            }),
         ];
     }
 
