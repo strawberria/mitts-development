@@ -1,6 +1,6 @@
 {
-  "name": "Mitts-Development",
-  "outputfilename": "Mitts-Development",
+  "name": "Mitts Development",
+  "outputfilename": "mitts-development",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
