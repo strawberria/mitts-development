@@ -234,7 +234,7 @@
                 </div>
             </svelte:fragment>
             <svelte:fragment slot="content">
-                <div class="border border-slate-500 
+                <div class="border border-slate-600 
                     minimap-display">
                     {#if $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 !== ""
                         && $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 !== undefined}

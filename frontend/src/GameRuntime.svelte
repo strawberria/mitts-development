@@ -240,7 +240,15 @@
     function handleActionClick(event: any) {
         if(event === undefined) { return; }
 
+        // Clear event and components if deselected
         const actionID = event.detail.key;
+        if($runtimeStore.selectedActionID === actionID) {
+            $runtimeStore.selectedActionID = undefined;
+            return;
+        }
+
+        // Else, clear components and handle depending on which action clicked
+        $runtimeStore.selectedComponentIDs = ["", ""];
         if(actionID !== "examine") {
             const actionData = gameData.data.actions.data[actionID];
             console.log(`[RUN] handleActionClick - [${actionID} - ${actionData.name}]`);
@@ -360,10 +368,18 @@
         // Ignore if no action selected
         if($runtimeStore.selectedActionID === undefined || event === undefined) { return; }
 
-        // Push object ID to selected objects
+        // Remove if already highlighted 
         const objectID = event.detail.key;
+        const existingIndex = $runtimeStore.selectedComponentIDs.indexOf(objectID);
+        if(existingIndex !== -1) { // Can only be zero
+            $runtimeStore.selectedComponentIDs[0] = "";
+            return;
+        }
+
+        // Push object ID to selected objects
         $runtimeStore.selectedComponentIDs[$runtimeStore.selectedComponentIDs[0] === "" ? 0 : 1] = objectID;
         $runtimeStore.selectedComponentIDs = $runtimeStore.selectedComponentIDs;
+
 
         const actionData = gameData.data.actions.data[$runtimeStore.selectedActionID];
 
@@ -466,6 +482,27 @@
         $runtimeStore.seenInteractables.add(hoverID);
         $runtimeStore.seenInteractables = $runtimeStore.seenInteractables;
     }
+
+    let actionName: string | undefined = undefined;
+    let actionVerb: string | undefined = undefined;
+    let componentName: string | undefined = undefined;
+    runtimeStore.subscribe(v => {
+        if(v.selectedActionID === "examine") {
+            actionName = "Examine";
+        } else {
+            const actionData = gameData.data.actions.data[v.selectedActionID];
+            actionName = actionData !== undefined ? actionData.name : undefined;
+            actionVerb = actionData !== undefined ? actionData.verb : undefined;
+        }
+
+        const restraintData = gameData.storage.restraints.data[v.selectedComponentIDs[0]];
+        if(restraintData !== undefined) { componentName = restraintData.name; return; }
+        const objectData = gameData.storage.objects.data[v.selectedComponentIDs[0]];
+        if(objectData !== undefined) { componentName = objectData.name; return; }
+        const locationData = gameData.data.restraintLocations.data[v.selectedComponentIDs[0]];
+        if(locationData !== undefined) { componentName = locationData.name; return; }
+        componentName = undefined;
+    })
 </script>
 
 <div class="flex flex-row items-stretch space-x-4
@@ -494,6 +531,9 @@
                                     highlighted={false}
                                     seen={true}
                                     on:dispatchClick={handleHintClick} />
+                            {:else} 
+                                <!-- Placeholderr RuntimeClick -->
+                                <div class="h-6" />
                             {/if}
                         {/each}
                     </div>
@@ -504,7 +544,7 @@
             h-full" style="width: 30%">
             <FormGrouping>
                 <svelte:fragment slot="content">
-                    <div class="border border-slate-500 
+                    <div class="border border-slate-600 
                         minimap-display">
                         {#if gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapB64 !== ""
                             && gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapB64 !== undefined}
@@ -583,19 +623,30 @@
         <div class="grow flex flex-col h-full space-y-4">
             <FormGrouping>
                 <svelte:fragment slot="content">
-                    <div class="flex flex-row items-center space-x-6 pl-1 pr-1">
-                        <RuntimeClick key={"examine"}
-                            name={"Examine"}
-                            highlighted={$runtimeStore.selectedActionID === "examine"}
-                            seen={true}
-                            on:dispatchClick={handleActionClick} />
-                        {#each gameData.data.actions.ordering as actionID}
-                            <RuntimeClick key={actionID}
-                                name={gameData.data.actions.data[actionID].name}
-                                highlighted={$runtimeStore.selectedActionID === actionID}
+                    <div class="flex flex-col space-y-2 items-start pl-1 pr-1 mb-1">
+                        <div class="flex flex-row items-center space-x-6 w-full">
+                            <RuntimeClick key={"examine"}
+                                name={"Examine"}
+                                highlighted={$runtimeStore.selectedActionID === "examine"}
                                 seen={true}
                                 on:dispatchClick={handleActionClick} />
-                        {/each}
+                            {#each gameData.data.actions.ordering as actionID}
+                                <RuntimeClick key={actionID}
+                                    name={gameData.data.actions.data[actionID].name}
+                                    highlighted={$runtimeStore.selectedActionID === actionID}
+                                    seen={true}
+                                    on:dispatchClick={handleActionClick} />
+                            {/each}
+                        </div>
+                        <p class="text-l text-slate-300 h-4">
+                            {#if actionName !== undefined}
+                                {#if componentName !== undefined}
+                                    {actionName} [{componentName}] {actionVerb}
+                                {:else}
+                                    {actionName}
+                                {/if}
+                            {/if}
+                        </p>
                     </div>
                 </svelte:fragment>
             </FormGrouping>

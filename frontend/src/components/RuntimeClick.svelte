@@ -16,8 +16,8 @@
 </script>
 
 <a class={`cursor-pointer h-6
-    ${!seen ? "text-slate-200"
-        : highlighted ? "text-slate-200" 
+    ${!seen ? "text-slate-300"
+        : highlighted ? "text-slate-300" 
             : "text-slate-400 hover:text-slate-300 focus:text-slate-200"}
     ${seen ? "" : "shadow"}`}
     on:click={handleClick}
