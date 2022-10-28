@@ -1,7 +1,7 @@
 <script lang="ts">
     import NavigationBar from './components/NavigationBar.svelte'
     import NavigationTabs from './components/NavigationTabs.svelte';
-    import { NavigationData, playStore } from './miscellaneous';
+    import { NavigationData, playStore, projectStore } from './miscellaneous';
     import Information from './tabs/Information.svelte';
     import States from './tabs/States.svelte';
     import Interactions from './tabs/Interactions.svelte';
@@ -22,6 +22,7 @@
     let selectedWindow: string = Object.keys(navigationData)[0];
     let navigateTab: (navigationKey: string) => void; // NavigationWindows
     const navigationClickHandler = (navigationKey: string) => { navigateTab(navigationKey); }
+    window["projectStore"] = $projectStore;
 
     let show: boolean = true;
 </script>
@@ -43,5 +44,6 @@
 <style>
     :global(html) {
         background-color: rgba(15, 23, 42, 1);
+        box-sizing: border-box;
     }
 </style>

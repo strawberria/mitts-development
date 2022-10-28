@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { transpileFuncs } from "../transpile";
 	import { ExportProject, ImportProject } from "../../wailsjs/go/main/Bridge";
 	import { MouseClickEvent, NavigationData, playStore, ProjectData, projectStore, sleep, version } from "../miscellaneous";
 	import IconButton from "./IconButton.svelte";
@@ -9,15 +10,37 @@
 	export let show: boolean; // Held false for a bit when reloading
 
 	async function importClick() {
+		// Run transpilation for older versions
 		const serialized = await ImportProject();
-		const newProjectData = JSON.parse(serialized) as ProjectData;
+		let transpiledProjectData = JSON.parse(serialized);
+		for(const transpileFunc of transpileFuncs) {
+			transpiledProjectData = await transpileFunc(transpiledProjectData);
+		}
 		show = false; await sleep(50); 
-		projectStore.set(newProjectData);
+		projectStore.set(transpiledProjectData as ProjectData);
 		await sleep(50); 
 		show = true; 
 	}
 
 	async function exportClick() {
+		// Dumb way: remove stray image references by brute force checking
+		const usedImageHashes: Set<string> = new Set();
+		for(const stateData of Object.values($projectStore.storage.states.data)) {
+			usedImageHashes.add(stateData.imageHash);
+			for(const minimapLocationData of Object.values(stateData.locations.data)) {
+				usedImageHashes.add(minimapLocationData.minimapHash);
+			}
+		}
+		usedImageHashes.delete(""); // Means unused
+
+		// Iterate over stored images and delete unused ones
+		for(const imageHash of Object.keys($projectStore.storage.images)) {
+			if(usedImageHashes.has(imageHash) === false) {
+				console.log(`Deleting unused image hash [${imageHash}]`)
+				delete $projectStore.storage.images[imageHash];
+			}
+		}
+
 		const serialized = JSON.stringify($projectStore);
 		await ExportProject(serialized);
 	}

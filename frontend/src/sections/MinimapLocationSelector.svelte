@@ -7,7 +7,6 @@
 
     export let selectedStateID: string | undefined;
     export let selectedMinimapLocationID: string | undefined;
-    $: selectedStateID, console.log(selectedStateID)
 
     let scrollingMinimapLocationData: ScrollingRadioData[];
     function generateMinimapLocationData(): ScrollingRadioData[] {
@@ -32,6 +31,8 @@
         $projectStore.storage.states.data[selectedStateID].locations.data[id] = {
             id: id,
             name: "",
+            devName: "",
+            initial: true,
             minimapB64: "",
             minimapObjects: {
                 data: {},
@@ -45,14 +46,18 @@
     
     function copyMinimapLocation() {
         if(selectedMinimapLocationID !== undefined) {
+            const existingMinimapLocationIndex = $projectStore.storage.states.data[selectedStateID].locations.ordering.indexOf(selectedMinimapLocationID);
             const selectedMinimapLocationData = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID];
             const copiedMinimapLocationData: ProjectMinimapLocationData = JSON.parse(JSON.stringify(selectedMinimapLocationData));
-            const copiedMinimapLocationId = randomID(idLength);
-            copiedMinimapLocationData.id = copiedMinimapLocationId;
-            $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID] = copiedMinimapLocationData;
-            $projectStore.storage.states.data[selectedStateID].locations.ordering.push(copiedMinimapLocationId);
+            const copiedMinimapLocationID = randomID(idLength);
+            copiedMinimapLocationData.id = copiedMinimapLocationID;
+            $projectStore.storage.states.data[selectedStateID].locations.data[copiedMinimapLocationID] = copiedMinimapLocationData;
+            $projectStore.storage.states.data[selectedStateID].locations.ordering.splice(existingMinimapLocationIndex + 1, 0, copiedMinimapLocationID);
+            // $projectStore.storage.states.data[selectedStateID].locations.ordering.push(copiedMinimapLocationId);
 
             $projectStore.storage.states.data[selectedStateID].locations = $projectStore.storage.states.data[selectedStateID].locations;
+
+            selectedMinimapLocationID = copiedMinimapLocationID;
         }
     }
 

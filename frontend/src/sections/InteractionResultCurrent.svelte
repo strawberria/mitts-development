@@ -12,8 +12,10 @@
     let resultChoiceData: ChoiceData<InteractionResultType>[] = [
         { key: "restraintAdd", display: "Add restraint", enabled: true },
         { key: "restraintRemove", display: "Remove restraint", enabled: true },
-        { key: "objectReveal", display: "Reveal object", enabled: true },
-        { key: "objectHide", display: "Hide object", enabled: true },
+        { key: "objectReveal", display: "Add object", enabled: true },
+        { key: "objectHide", display: "Remove object", enabled: true },
+        { key: "locationAdd", display: "Add location", enabled: true },
+        { key: "locationRemove", display: "Remove location", enabled: true },
         { key: "setState", display: "Set state", enabled: true },
         { key: "setFlag", display: "Set flag", enabled: true },
         { key: "popupDialog", display: "Show dialog", enabled: true },
@@ -36,6 +38,17 @@
         objectChoiceData = $projectStore.storage.objects.ordering
             .map(id => {
                 const data = $projectStore.storage.objects.data[id];
+                return { key: data.id, display: data.devName, enabled: true };
+            });
+    }
+
+    let locationChoiceData: ChoiceData<string>[] = [];
+    $: {
+        $projectStore.storage.states;
+        locationChoiceData = $projectStore.storage.states.data[selectedStateID].locations.ordering
+            .map(id => {
+                const data = $projectStore.storage.states.data[selectedStateID].locations.data[id];
+                console.log(data)
                 return { key: data.id, display: data.devName, enabled: true };
             });
     }
@@ -103,6 +116,12 @@
                         disabled={false}
                         choicesData={objectChoiceData}
                         bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0]} />
+                {:else if resultType === "locationAdd" || resultType === "locationRemove"}
+                    <LabelSelect class="w-1/2" 
+                        label={"Minimap Location"} 
+                        disabled={false}
+                        choicesData={locationChoiceData}
+                        bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0]} />
                 {:else if resultType === "setState"}
                     <LabelSelect class="w-1/2" 
                         label={"State"} 
@@ -123,7 +142,7 @@
                         bind:value={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0]} 
                         label={"Dialog Text"}
                         placeholder={"While struggling in your restraints, you fail to notice the door opening behind you..."}
-                        rows={4} />
+                        rows={6} />
                 {/if}
             </svelte:fragment>
         </FormGrouping>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import LabelTextInput from "../components/LabelTextInput.svelte";
     import FormGrouping from "../components/FormGrouping.svelte";
-    import { ChoiceData, ProjectRestraintData, projectStore } from "../miscellaneous";
+    import { ChoiceData, projectStore } from "../miscellaneous";
     import LabelSelect from "../components/LabelSelect.svelte";
 
     export let selectedLocationID: string;

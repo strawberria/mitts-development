@@ -15,7 +15,17 @@ export async function sleep(duration: number) {
     return new Promise(r => setTimeout(r, duration));
 }
 
-export const version = "1.7.3";
+export async function hashSHA256(data: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(data);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedData);
+    const hash = Array.from(new Uint8Array(hashBuffer))
+        .map(buffer => buffer.toString(16).padStart(2, '0'))
+        .join("");
+    return hash
+}
+
+export const version = "1.8.0";
 export const idLength = 8;
 export const playStore: Writable<boolean> = writable(false);
 export const stateStore: Writable<string | undefined> = writable<string>(undefined);
@@ -50,6 +60,7 @@ export const projectStore: Writable<ProjectData> = writable<ProjectData>({
             data: {},
             ordering: [],
         },
+        images: {},
     }
 });
 
@@ -77,7 +88,7 @@ export interface ProjectStateData extends ProjectConstruct {
     title:          string;
     description:    string;
     notes:          string; // only visible in editor
-    imageB64:       string; // base64-encoded
+    imageHash:      string; // base64-encoded
     type:           StateType;
     args:           any[];
     interactions:   OrderedProjectData<ProjectInteractionData>;
@@ -92,6 +103,7 @@ export interface ProjectActionData extends ProjectConstruct {
 }
 export interface ProjectRestraintLocationData extends ProjectConstruct {
     name:    string;
+    devName: string;
     initial: string;
 }
 export interface ProjectRestraintData extends ProjectConstruct {
@@ -116,7 +128,9 @@ export interface ProjectInteractionData extends ProjectConstruct {
 
 export interface ProjectMinimapLocationData extends ProjectConstruct {
     name:           string;
-    minimapB64:     string; // base64-encoded
+    devName:        string;
+    initial:        boolean;
+    minimapHash:    string; // base64-encoded
     minimapObjects: OrderedProjectData<ProjectMinimapObjectData>;
 }
 export type MinimapObjectType = "circle" | "vector";
@@ -133,7 +147,7 @@ export interface ProjectInteractionCriteriaData extends ProjectConstruct {
     type:    InteractionCriteriaType;
     args:    any[];
 }
-export type InteractionResultType = "restraintAdd" | "restraintRemove" | "objectReveal" | "objectHide" | "setState" | "setFlag" | "popupDialog" | "resetAttempts";
+export type InteractionResultType = "restraintAdd" | "restraintRemove" | "objectReveal" | "objectHide" | "setState" | "setFlag" | "popupDialog" | "resetAttempts" | "locationAdd" | "locationRemove";
 export interface ProjectInteractionResultData extends ProjectConstruct {
     devName: string;
     type:    InteractionResultType;
@@ -156,5 +170,6 @@ export interface ProjectData {
         states:       OrderedProjectData<ProjectStateData>;
         restraints:   OrderedProjectData<ProjectRestraintData>;
         objects:      OrderedProjectData<ProjectObjectData>;
+        images:       { [hash: string]: string };
     }
 }

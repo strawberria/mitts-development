@@ -19,7 +19,7 @@
     ${!seen ? "text-slate-300"
         : highlighted ? "text-slate-300" 
             : "text-slate-400 hover:text-slate-300 focus:text-slate-200"}
-    ${seen ? "" : "shadow"}`}
+    ${highlighted ? "highlighted" : seen ? "" : "shadow"}`}
     on:click={handleClick}
     on:mouseenter={handleEnter}>
     {name}
@@ -28,5 +28,8 @@
 <style>
     .shadow {
         text-shadow: 0px 0px 5px #ff0061
+    }
+    .highlighted {
+        text-shadow: 0px 0px 5px #ce17df
     }
 </style>

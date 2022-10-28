@@ -7,7 +7,7 @@
     import LabelSelect from "../components/LabelSelect.svelte";
     import LabelTextArea from "../components/LabelTextArea.svelte";
     import LabelTextInput from "../components/LabelTextInput.svelte";
-    import { ChoiceData, projectStore, StateType } from "../miscellaneous";
+    import { ChoiceData, hashSHA256, projectStore, StateType } from "../miscellaneous";
 
     export let selectedStateID: string;
 
@@ -43,13 +43,20 @@
     async function loadStateImage() {
         const imageB64 = await LoadImage();
         if(imageB64.startsWith("Cancelled") === true) { return; }
-        $projectStore.storage.states.data[selectedStateID].imageB64 = imageB64;
+        // Delete previous hash beforehand, then add new image
+        const previousHash = $projectStore.storage.states.data[selectedStateID].imageHash;
+        delete $projectStore.storage.images[previousHash];
+        const imageHash = await hashSHA256(imageB64);
+        $projectStore.storage.images[imageHash] = imageB64;
+        $projectStore.storage.states.data[selectedStateID].imageHash = imageHash;
 
         $projectStore.storage.states = $projectStore.storage.states;
     }
 
     async function clearStateImage() {
-        $projectStore.storage.states.data[selectedStateID].imageB64 = "";
+        const previousHash = $projectStore.storage.states.data[selectedStateID].imageHash;
+        delete $projectStore.storage.images[previousHash];
+        $projectStore.storage.states.data[selectedStateID].imageHash = "";
 
         $projectStore.storage.states = $projectStore.storage.states;
     }
@@ -86,7 +93,7 @@
         <div class="grow flex flex-row space-x-6">
             <div class="flex flex-col space-y-2 w-1/2">
                 <LabelImage label="Image" 
-                    imageData={$projectStore.storage.states.data[selectedStateID].imageB64} />
+                    imageData={$projectStore.storage.images[$projectStore.storage.states.data[selectedStateID].imageHash]} />
                 <div class="flex flex-row space-x-2">
                     <IconButton class="mt-1"
                         label={"Load Image"}

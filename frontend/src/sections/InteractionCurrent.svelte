@@ -31,7 +31,7 @@
             ...($projectStore.storage.restraints.ordering)
                 .map(id => {
                     const data = $projectStore.storage.restraints.data[id];
-                    return { key: data.id, display: `(L) ${data.devName}`, enabled: true };
+                    return { key: data.id, display: `(R) ${data.devName}`, enabled: true };
                 }),
             ...($projectStore.storage.objects.ordering)
                 .map(id => {
@@ -48,6 +48,9 @@
             const actionData = $projectStore.data.actions.data[$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].action];
             if(actionData !== undefined) {
                 componentTwoAllowed = actionData.two;
+                if(!componentTwoAllowed) { // Clear second component if not allowed
+                    $projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].components[1] = ""
+                }
             }
         }
     }
@@ -91,12 +94,12 @@
                 choicesData={actionsChoiceData}
                 bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].action} />
             <div class="flex flex-row space-x-6">
-                <LabelSelect class="w-1/2" 
+                <LabelSelect class="w-1/2 truncate" 
                     label={"Component #1"} 
                     disabled={hasExceededAttempts === true}
                     choicesData={componentsChoiceData}
                     bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].components[0]} />
-                <LabelSelect class="grow" 
+                <LabelSelect class="grow truncate" 
                     label={"Component #2"} 
                     disabled={hasExceededAttempts === true || componentTwoAllowed === false}
                     choicesData={componentsChoiceData}

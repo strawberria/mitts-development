@@ -1,5 +1,6 @@
 <script lang="ts">
     import LabelTextInput from "../components/LabelTextInput.svelte";
+    import LabelToggle from "../components/LabelToggle.svelte";
     import FormGrouping from "../components/FormGrouping.svelte";
     import { projectStore } from "../miscellaneous";
 
@@ -14,11 +15,21 @@
             <p class="text-slate-300 text-xl">Selected Minimap Location</p>
         </svelte:fragment>
         <svelte:fragment slot="content">
-            <div class="flex flex-row space-x-6">
-                <LabelTextInput class="w-1/2"
-                    bind:value={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].name}
-                    label={"Name"}
-                    placeholder={"Bedroom"} />
+            <div class="flex flex-col space-y-2">
+                <div class="flex flex-row space-x-6">
+                    <LabelTextInput class="w-1/2"
+                        bind:value={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].devName}
+                        label={"Development Name"}
+                        placeholder={"Bedroom"} />
+                    <LabelTextInput class="w-1/2"
+                        bind:value={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].name}
+                        label={"Name"}
+                        placeholder={"Bedroom (Blindfolded)"} />
+                </div>
+                <div class="flex flex-row space-x-6">
+                    <LabelToggle bind:value={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].initial}
+                        label={"Initially Available"} />
+                </div>
             </div>
         </svelte:fragment>
     </FormGrouping>

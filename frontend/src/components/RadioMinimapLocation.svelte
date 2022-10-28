@@ -23,7 +23,7 @@
     on:click={handleClick}>
     <div class="grow flex flex-row items-center space-x-2 
         h-full">
-        <p class="text-left w-11/12 min-w-0 truncate">{minimapLocationData.name}</p>
+        <p class="text-left w-11/12 min-w-0 truncate">{minimapLocationData.devName}</p>
     </div>
     <div class="flex flex-row items-center h-full">
         <p class={`text-center font-mono ${selected === true

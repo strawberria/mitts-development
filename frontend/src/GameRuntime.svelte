@@ -25,7 +25,17 @@
     console.log(`[RUN] Found starting state: [${startingStateID} - ${startingStateData.title}]`);
 
     // Find and set initial minimap location and restraints - reset here when restarting
-    const initialMinimapLocation = gameData.storage.states.data[startingStateID].locations.ordering[0];
+    let initialMinimapLocation: string = "";
+    let initialAvailableLocations: string[] = [];
+    for(const minimapLocationID of gameData.storage.states.data[startingStateID].locations.ordering) {
+        const minimapLocationData = gameData.storage.states.data[startingStateID].locations.data[minimapLocationID];
+        if(minimapLocationData.initial === true) {
+            initialAvailableLocations.push(minimapLocationID);
+            if(initialMinimapLocation === "") {
+                initialMinimapLocation = minimapLocationID;
+            }
+        }
+    }
     const initialRestraintIDs = gameData.data.restraintLocations.ordering
         .map(id => gameData.data.restraintLocations.data[id])
         .map(v => v.initial).filter(v => v !== "");
@@ -48,16 +58,17 @@
 
     // Current runtime - store within singular object for future saving/loading
     const initialRuntimeData = {
-        dialogText: undefined                            as string | undefined,
-        selectedActionID: undefined                      as string | undefined,
-        selectedComponentIDs: ["", ""]                   as string[],
-        currentStateID: openingStateID                   as string,
-        currentMinimapLocationID: initialMinimapLocation as string,
-        currentRestraintIDs: initialRestraintIDs         as string[],
-        revealedObjectIDs: []                            as string[],
-        currentAttempts: 0                               as number,
-        seenInteractables: new Set()                     as Set<string>,
-        flags: {}                                        as { [key: string]: string },
+        dialogText: undefined                                as string | undefined,
+        selectedActionID: undefined                          as string | undefined,
+        selectedComponentIDs: ["", ""]                       as string[],
+        currentStateID: openingStateID                       as string,
+        currentMinimapLocationID: initialMinimapLocation     as string,
+        availableMinimapLocations: initialAvailableLocations as string[],
+        currentRestraintIDs: initialRestraintIDs             as string[],
+        revealedObjectIDs: []                                as string[],
+        currentAttempts: 0                                   as number,
+        seenInteractables: new Set()                         as Set<string>,    
+        flags: {}                                            as { [key: string]: string },
     };
     const runtimeStore = writable<typeof initialRuntimeData>(JSON.parse(JSON.stringify(initialRuntimeData)));
     $runtimeStore = initialRuntimeData; // Parsing causes issues?
@@ -142,7 +153,7 @@
 
             // Check whether the click point is within the path
             if(canvasContext.isPointInPath(path, clickCoordX, clickCoordY)) {
-                console.log(`[RUN] handleMinimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
+                console.log(`[RUN] handleMihttps://github.com/strawberria/mitts-development/releases/tag/1.7.3nimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
 
                 // Add object if defined
                 if(minimapObjectData.object !== "") { addFoundObject(minimapObjectData.object) }
@@ -196,10 +207,39 @@
         // Assume that current restraints are already sorted
         $runtimeStore.currentRestraintIDs = $runtimeStore.currentRestraintIDs.filter(v => v !== restraintID);
     }
+    function addLocation(locationID: string) {
+        const locationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[locationID];
+        if($runtimeStore.availableMinimapLocations.findIndex(v => v === locationID) !== -1) {
+            console.log(`[RUN] addLocation - already has location [${locationData.devName}], not adding`);
+
+            return; 
+        }
+
+        console.log(`[RUN] addLocation - ${locationData.devName}`);
+
+        $runtimeStore.availableMinimapLocations.push(locationID);
+        $runtimeStore.availableMinimapLocations = $runtimeStore.availableMinimapLocations;
+
+        // Swap to new location, some might not like?
+        $runtimeStore.currentMinimapLocationID = locationID;
+    }
+    function removeLocation(locationID: string) {
+        const locationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[locationID];
+        console.log(`[RUN] removeRestraint - ${locationData.devName}`);
+
+        $runtimeStore.availableMinimapLocations = $runtimeStore.availableMinimapLocations.filter(v => v !== locationID);
+
+        // Move player back to first available location if current location changed
+        if($runtimeStore.currentMinimapLocationID === locationID) {
+            $runtimeStore.currentMinimapLocationID = gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering
+                .filter(v => $runtimeStore.availableMinimapLocations.includes(v))[0];
+        }
+    }
     function showDialog(newDialogText: string) {
         console.log(`[RUN] showDialog - displaying dialog [${newDialogText}]`);
 
-        $runtimeStore.dialogText = newDialogText;
+        // Only add to queue if not already shown
+        $runtimeStore.dialogText = newDialogText
     }
     function hideDialog() {
         console.log(`[RUN] hideDialog - hiding dialog text if shown`);
@@ -312,7 +352,7 @@
                     } break;
                     case "exceededAttempts": {
                         passedCriteria = checkAttempts && $runtimeStore.currentAttempts >= criteriaData.args[0];
-                        console.log(checkAttempts && $runtimeStore.currentAttempts >= criteriaData.args[0])
+                        console.log(`exceededAttempts check: ${passedCriteria}`)
                     } break;
                 }
 
@@ -338,6 +378,7 @@
                     $runtimeStore.flags[resultData.args[0]] = resultData.args[1];
                 } break;
                 case "setState": {
+                    // Reset number of attempts whenever state changed
                     $runtimeStore.currentStateID = resultData.args[0];
                     $runtimeStore.currentAttempts = 0;
                 } break;
@@ -356,6 +397,12 @@
                 case "restraintRemove": {
                     removeRestraint(resultData.args[0]);
                 } break;
+                case "locationAdd": {
+                    addLocation(resultData.args[0]);
+                } break;
+                case "locationRemove": {
+                    removeLocation(resultData.args[0]);
+                } break;
                 case "resetAttempts": {
                     resetAttempts();
                 }
@@ -370,11 +417,11 @@
 
         // Remove if already highlighted 
         const objectID = event.detail.key;
-        const existingIndex = $runtimeStore.selectedComponentIDs.indexOf(objectID);
-        if(existingIndex !== -1) { // Can only be zero
-            $runtimeStore.selectedComponentIDs[0] = "";
-            return;
-        }
+        // const existingIndex = $runtimeStore.selectedComponentIDs.indexOf(objectID);
+        // if(existingIndex !== -1) { // Can only be zero
+        //     $runtimeStore.selectedComponentIDs[0] = "";
+        //     return;
+        // }
 
         // Push object ID to selected objects
         $runtimeStore.selectedComponentIDs[$runtimeStore.selectedComponentIDs[0] === "" ? 0 : 1] = objectID;
@@ -456,6 +503,7 @@
 
             console.log(`[RUN] handleObjectClick - clearing since no interaction found`);
 
+            // Only add dialog if not already there
             $runtimeStore.dialogText = "You can't do that!"
             $runtimeStore.selectedActionID = undefined;
             $runtimeStore.selectedComponentIDs = ["", ""];
@@ -514,9 +562,8 @@
             <svelte:fragment slot="content">
                 <div class="h-full flex flex-col items-start">
                     <div class="flex flex-col w-full space-y-4 items-center">
-                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].imageB64 !== ""
-                            && gameData.storage.states.data[$runtimeStore.currentStateID].imageB64 !== undefined}
-                            <img class="object-contain w-4/5" src={gameData.storage.states.data[$runtimeStore.currentStateID].imageB64} />
+                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].imageHash !== ""}
+                            <img class="object-contain w-4/5" src={gameData.storage.images[gameData.storage.states.data[$runtimeStore.currentStateID].imageHash]} />
                         {/if}
                         <ParagraphNewline class="w-full"
                             text={gameData.storage.states.data[$runtimeStore.currentStateID].description} />
@@ -546,11 +593,10 @@
                 <svelte:fragment slot="content">
                     <div class="border border-slate-600 
                         minimap-display">
-                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapB64 !== ""
-                            && gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapB64 !== undefined}
+                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapHash !== ""}
                             <img class="absolute h-full w-full object-contain"
                                 style="z-index: 12"
-                                src={gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapB64} />
+                                src={gameData.storage.images[gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapHash]} />
                             <canvas class="absolute h-full w-full"
                                 style="z-index: 14"
                                 bind:this={canvas}
@@ -573,10 +619,12 @@
                             bind:value={$runtimeStore.currentMinimapLocationID}>
                             {#each gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering
                                 .map(id => gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[id]) as minimapLocationData}
-                                <option class="text-slate-300"
-                                    value={minimapLocationData.id}>
-                                    {minimapLocationData.name}
-                                </option>
+                                {#if $runtimeStore.availableMinimapLocations.includes(minimapLocationData.id)}
+                                    <option class="text-slate-300"
+                                        value={minimapLocationData.id}>
+                                        {minimapLocationData.name}
+                                    </option>
+                                {/if}
                             {/each}
                         </select>
                     </div>
@@ -638,7 +686,8 @@
                                     on:dispatchClick={handleActionClick} />
                             {/each}
                         </div>
-                        <p class="text-l text-slate-300 h-4">
+                        <p class="text-l text-slate-400 h-4"
+                            style="text-shadow: 0px 0px 5px #2f2b8a">
                             {#if actionName !== undefined}
                                 {#if componentName !== undefined}
                                     {actionName} [{componentName}] {actionVerb}
@@ -689,8 +738,8 @@
                 <svelte:fragment slot="content">
                     <div class="flex flex-col space-y-4
                         w-full h-full">
-                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].imageB64 !== ""}
-                            <img class="object-contain w-full" src={gameData.storage.states.data[$runtimeStore.currentStateID].imageB64} />
+                        {#if gameData.storage.states.data[$runtimeStore.currentStateID].imageHash !== ""}
+                            <img class="object-contain w-full" src={gameData.storage.images[gameData.storage.states.data[$runtimeStore.currentStateID].imageHash]} />
                         {/if}
                         <div class="flex flex-col space-y-2 w-full items-center">
                             <ParagraphNewline class="text-slate-400 text-center"

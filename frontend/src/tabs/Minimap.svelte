@@ -44,19 +44,19 @@
         <div class="flex flex-col space-y-4
             h-full" style="width: 30%">
             <div class="flex flex-col 
-                h-1/4 w-full">
+                h-1/4 w-full" style="min-height: 25%">
                 <MinimapLocationSelector selectedStateID={$stateStore}
                     bind:selectedMinimapLocationID={selectedMinimapLocationID} />
             </div>
             <div class="flex flex-col 
-                h-1/5 w-full">
+                w-full">
                 {#if selectedMinimapLocationID !== undefined}
                     <MinimapLocationCurrent selectedStateID={$stateStore}
                         selectedMinimapLocationID={selectedMinimapLocationID} />
                 {/if}
             </div>
             <div class="flex flex-col 
-                grow w-full">
+                grow w-full min-h-0">
                 {#if selectedMinimapLocationID !== undefined}
                     <MinimapObjectSelector selectedStateID={$stateStore}
                         selectedMinimapLocationID={selectedMinimapLocationID}

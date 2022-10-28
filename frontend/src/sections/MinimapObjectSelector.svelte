@@ -45,14 +45,18 @@
 
     function copyMinimapObject() {
         if(selectedMinimapObjectID !== undefined) {
+            const existingMinimapObjectIndex = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering.indexOf(selectedMinimapObjectID);
             const selectedMinimapObjectData = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[selectedMinimapObjectID];
             const copiedMinimapObjectData: ProjectMinimapObjectData = JSON.parse(JSON.stringify(selectedMinimapObjectData));
-            const copiedMinimapObjectId = randomID(idLength);
-            copiedMinimapObjectData.id = copiedMinimapObjectId;
-            $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[copiedMinimapObjectId] = copiedMinimapObjectData;
-            $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering.push(copiedMinimapObjectId);
+            const copiedMinimapObjectID = randomID(idLength);
+            copiedMinimapObjectData.id = copiedMinimapObjectID;
+            $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[copiedMinimapObjectID] = copiedMinimapObjectData;
+            $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering.splice(existingMinimapObjectIndex + 1, 0, copiedMinimapObjectID);
+            // $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering.push(copiedMinimapObjectId);
 
             $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects;
+
+            selectedMinimapObjectID = copiedMinimapObjectID
         }
     }
 

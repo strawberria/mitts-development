@@ -40,14 +40,18 @@
 
     function copyObject() {
         if(selectedObjectID !== undefined) {
+            const existingObjectIndex = $projectStore.storage.objects.ordering.indexOf(selectedObjectID);
             const selectedObjectData = $projectStore.storage.objects.data[selectedObjectID];
             const copiedObjectData: ProjectObjectData = JSON.parse(JSON.stringify(selectedObjectData));
-            const copiedObjectId = randomID(idLength);
-            copiedObjectData.id = copiedObjectId;
-            $projectStore.storage.objects.data[copiedObjectId] = copiedObjectData;
-            $projectStore.storage.objects.ordering.push(copiedObjectId);
+            const copiedObjectID = randomID(idLength);
+            copiedObjectData.id = copiedObjectID;
+            $projectStore.storage.objects.data[copiedObjectID] = copiedObjectData;
+            $projectStore.storage.objects.ordering.splice(existingObjectIndex + 1, 0, copiedObjectID);
+            // $projectStore.storage.objects.ordering.push(copiedObjectId);
 
             $projectStore.storage.objects = $projectStore.storage.objects;
+
+            selectedObjectID = copiedObjectID;
         }
     }
 

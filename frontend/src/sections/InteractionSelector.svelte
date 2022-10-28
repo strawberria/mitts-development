@@ -52,14 +52,18 @@
 
     function copyInteraction() {
         if(selectedInteractionID !== undefined) {
+            const existingInteractionIndex = $projectStore.storage.states.data[selectedStateID].interactions.ordering.indexOf(selectedInteractionID);
             const selectedInteractionData = $projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID];
             const copiedInteractionData: ProjectInteractionData = JSON.parse(JSON.stringify(selectedInteractionData));
-            const copiedInteractionId = randomID(idLength);
-            copiedInteractionData.id = copiedInteractionId;
-            $projectStore.storage.states.data[selectedStateID].interactions.data[copiedInteractionId] = copiedInteractionData;
-            $projectStore.storage.states.data[selectedStateID].interactions.ordering.push(copiedInteractionId);
+            const copiedInteractionID = randomID(idLength);
+            copiedInteractionData.id = copiedInteractionID;
+            $projectStore.storage.states.data[selectedStateID].interactions.data[copiedInteractionID] = copiedInteractionData;
+            $projectStore.storage.states.data[selectedStateID].interactions.ordering.splice(existingInteractionIndex + 1, 0, copiedInteractionID);
+            // $projectStore.storage.states.data[selectedStateID].interactions.ordering.push(copiedInteractionId);
 
             $projectStore.storage.states.data[selectedStateID].interactions = $projectStore.storage.states.data[selectedStateID].interactions;
+
+            selectedInteractionID = copiedInteractionID
         }
     }
 

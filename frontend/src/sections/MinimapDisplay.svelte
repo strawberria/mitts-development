@@ -3,7 +3,7 @@
     import IconButton from "../components/IconButton.svelte";
     import FormGrouping from "../components/FormGrouping.svelte";
     import LabelSelect from "../components/LabelSelect.svelte";
-    import { ChoiceData, MinimapObjectType, ProjectMinimapObjectData, projectStore } from "../miscellaneous";
+    import { ChoiceData, hashSHA256, MinimapObjectType, ProjectMinimapObjectData, projectStore } from "../miscellaneous";
     import { LoadImage } from "../../wailsjs/go/main/Bridge";
     import LabelTextArea from "../components/LabelTextArea.svelte";
     import LabelTextInput from "../components/LabelTextInput.svelte";
@@ -15,13 +15,20 @@
     async function loadMinimapImage() {
         const imageB64 = await LoadImage();
         if(imageB64.startsWith("Cancelled") === true) { return; }
-        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 = imageB64;
+        // Delete previous hash beforehand, then add new image
+        const previousHash = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash;
+        delete $projectStore.storage.images[previousHash];
+        const imageHash = await hashSHA256(imageB64);
+        $projectStore.storage.images[imageHash] = imageB64;
+        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash = imageHash;
 
         $projectStore.storage.states = $projectStore.storage.states;
     }
 
     async function clearMinimapImage() {
-        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 = "";
+        const previousHash = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash;
+        delete $projectStore.storage.images[previousHash];
+        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash = "";
 
         $projectStore.storage.states = $projectStore.storage.states;
     }
@@ -236,11 +243,10 @@
             <svelte:fragment slot="content">
                 <div class="border border-slate-600 
                     minimap-display">
-                    {#if $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 !== ""
-                        && $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64 !== undefined}
+                    {#if $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash !== ""}
                         <img class="absolute h-full w-full object-contain"
                             style="z-index: 12"
-                            src={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapB64} />
+                            src={$projectStore.storage.images[$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapHash]} />
                     {/if}
                     <canvas class="absolute h-full w-full"
                         style="z-index: 14"

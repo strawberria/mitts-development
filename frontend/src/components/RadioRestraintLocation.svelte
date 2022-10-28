@@ -13,11 +13,11 @@
         dispatch("dispatchClick", { key: key })
     }
 
-    let restrainName: string = "";
+    let restraintName: string = "";
     $: {
         $projectStore.storage.restraints;
         const restraintData = $projectStore.storage.restraints.data[locationData.initial];
-        restrainName = restraintData !== undefined
+        restraintName = restraintData !== undefined
             ? restraintData.name
             : "";
     }
@@ -34,11 +34,13 @@
         <p class="h-6 text-left w-full min-w-0 truncate">{locationData.name}</p>
         <p class={`h-5 text-sm ${selected === true
             ? "text-slate-400"
-            : "text-slate-500"}`}>{restrainName}</p>
+            : "text-slate-500"}`}>{restraintName}</p>
     </div>
-    <p class={`font-mono ${selected === true
-        ? "text-slate-500"
-        : "text-slate-600"}`}>
-        {key}
-    </p>
+    <div class="flex flex-row items-center h-full">
+        <p class={`font-mono ${selected === true
+            ? "text-slate-500"
+            : "text-slate-600"}`}>
+            {key}
+        </p>
+    </div>
 </div>

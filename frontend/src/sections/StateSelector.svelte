@@ -31,7 +31,7 @@
             title: "",
             description: "",
             notes: "",
-            imageB64: "",
+            imageHash: "",
             type: "normal",
             args: [],
             hints: [
@@ -57,14 +57,18 @@
 
     function copyState() {
         if(selectedStateID !== undefined) {
+            const existingStateIndex = $projectStore.storage.states.ordering.indexOf(selectedStateID);
             const selectedStateData = $projectStore.storage.states.data[selectedStateID];
             const copiedStateData: ProjectStateData = JSON.parse(JSON.stringify(selectedStateData));
-            const copiedStateId = randomID(idLength);
-            copiedStateData.id = copiedStateId;
-            $projectStore.storage.states.data[copiedStateId] = copiedStateData;
-            $projectStore.storage.states.ordering.push(copiedStateId);
+            const copiedStateID = randomID(idLength);
+            copiedStateData.id = copiedStateID;
+            $projectStore.storage.states.data[copiedStateID] = copiedStateData;
+            $projectStore.storage.states.ordering.splice(existingStateIndex + 1, 0, copiedStateID);
+            // $projectStore.storage.states.ordering.push(copiedStateId);
 
             $projectStore.storage.states = $projectStore.storage.states;
+
+            selectedStateID = copiedStateID;
         }
     }
 

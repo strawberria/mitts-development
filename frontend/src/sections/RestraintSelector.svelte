@@ -40,14 +40,18 @@
 
     function copyRestraint() {
         if(selectedRestraintID !== undefined) {
+            const existingRestraintIndex = $projectStore.storage.restraints.ordering.indexOf(selectedRestraintID);
             const selectedRestraintData = $projectStore.storage.restraints.data[selectedRestraintID];
             const copiedRestraintData: ProjectRestraintData = JSON.parse(JSON.stringify(selectedRestraintData));
-            const copiedRestraintId = randomID(idLength);
-            copiedRestraintData.id = copiedRestraintId;
-            $projectStore.storage.restraints.data[copiedRestraintId] = copiedRestraintData;
-            $projectStore.storage.restraints.ordering.push(copiedRestraintId);
+            const copiedRestraintID = randomID(idLength);
+            copiedRestraintData.id = copiedRestraintID;
+            $projectStore.storage.restraints.data[copiedRestraintID] = copiedRestraintData;
+            $projectStore.storage.restraints.ordering.splice(existingRestraintIndex + 1, 0, copiedRestraintID);
+            // $projectStore.storage.restraints.ordering.push(copiedRestraintId);
 
             $projectStore.storage.restraints = $projectStore.storage.restraints;
+
+            selectedRestraintID = copiedRestraintID;
         }
     }
 
