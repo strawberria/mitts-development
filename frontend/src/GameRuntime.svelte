@@ -153,7 +153,7 @@
 
             // Check whether the click point is within the path
             if(canvasContext.isPointInPath(path, clickCoordX, clickCoordY)) {
-                console.log(`[RUN] handleMihttps://github.com/strawberria/mitts-development/releases/tag/1.7.3nimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
+                console.log(`[RUN] handleMinimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
 
                 // Add object if defined
                 if(minimapObjectData.object !== "") { addFoundObject(minimapObjectData.object) }
