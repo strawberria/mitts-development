@@ -22,7 +22,7 @@
     let selectedWindow: string = Object.keys(navigationData)[0];
     let navigateTab: (navigationKey: string) => void; // NavigationWindows
     const navigationClickHandler = (navigationKey: string) => { navigateTab(navigationKey); }
-    window["projectStore"] = $projectStore;
+    projectStore.subscribe(v => window["projectStore"] = v);
 
     let show: boolean = true;
 </script>

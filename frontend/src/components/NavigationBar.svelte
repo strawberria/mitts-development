@@ -16,7 +16,8 @@
 		for(const transpileFunc of transpileFuncs) {
 			transpiledProjectData = await transpileFunc(transpiledProjectData);
 		}
-		show = false; await sleep(50); 
+		show = false; await sleep(50);
+		transpiledProjectData.version = version; // Update after transpiling
 		projectStore.set(transpiledProjectData as ProjectData);
 		await sleep(50); 
 		show = true; 

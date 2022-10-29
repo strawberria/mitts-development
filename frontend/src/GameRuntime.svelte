@@ -381,6 +381,11 @@
                     // Reset number of attempts whenever state changed
                     $runtimeStore.currentStateID = resultData.args[0];
                     $runtimeStore.currentAttempts = 0;
+
+                    // Reset minimap location if current isn't available anymore
+                    if(gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID] === undefined) {
+                        $runtimeStore.currentMinimapLocationID = gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering[0]
+                    }
                 } break;
                 case "popupDialog": {
                     showDialog(resultData.args[0]);
