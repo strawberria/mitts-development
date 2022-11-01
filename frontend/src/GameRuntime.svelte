@@ -381,10 +381,17 @@
                     // Reset number of attempts whenever state changed
                     $runtimeStore.currentStateID = resultData.args[0];
                     $runtimeStore.currentAttempts = 0;
-
+                    
+                    for(const minimapLocationID of gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering) {
+                        const minimapLocationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[minimapLocationID];
+                        if(minimapLocationData.initial === true) {
+                            $runtimeStore.availableMinimapLocations.push(minimapLocationID);
+                        }
+                    }
+                    $runtimeStore.availableMinimapLocations = $runtimeStore.availableMinimapLocations;
                     // Reset minimap location if current isn't available anymore
                     if(gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID] === undefined) {
-                        $runtimeStore.currentMinimapLocationID = gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering[0]
+                        $runtimeStore.currentMinimapLocationID = gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering[0];
                     }
                 } break;
                 case "popupDialog": {
