@@ -49,12 +49,8 @@
 	async function playGame() {
 		const openingStates = Object.entries($projectStore.storage.states.data)
         	.filter(([id, data]) => data.type === "opening");
-		const startingStates = Object.entries($projectStore.storage.states.data)
-        	.filter(([id, data]) => data.type === "starting");
 		if(openingStates.length === 0) { 
 			alert("Error initializing playtesting: couldn't find opening state");
-		} else if(startingStates.length === 0) {
-			alert("Error initializing playtesting: couldn't find starting state");
 		} else {
 			$playStore = true;
 		}

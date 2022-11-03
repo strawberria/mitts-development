@@ -10,8 +10,11 @@
     export let selectedMinimapObjectID: string | undefined;
 
     let scrollingMinimapObjectData: ScrollingRadioData[];
-    function generateMinimapObjectData(): ScrollingRadioData[] {
-        return $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering
+    $: {
+        $projectStore.storage.states;
+        $projectStore.storage.states.data[selectedStateID].locations;
+        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects;
+        scrollingMinimapObjectData = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering
             .filter(id => id !== undefined).map((id) => {
                 const minimapObjectData = $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[id];
                 return {
@@ -19,13 +22,7 @@
                     component: RadioMinimapObject,
                     props: { minimapObjectData: minimapObjectData }
                 }
-            });
-    }
-    $: {
-        $projectStore.storage.states;
-        $projectStore.storage.states.data[selectedStateID].locations;
-        $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects;
-        scrollingMinimapObjectData = generateMinimapObjectData();
+            });;
     }
 
     function addMinimapObject() {
@@ -35,8 +32,9 @@
             devName: "",
             type: "circle",
             args: [],
-            object: "",
             dialog: "",
+            object: "",
+            interaction: "",
         }
         $projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.ordering.push(id);
 

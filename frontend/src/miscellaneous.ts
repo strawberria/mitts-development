@@ -82,7 +82,7 @@ export interface ProjectConstruct {
     id: string;
 }
 
-export type StateType = "normal" | "opening" | "starting" | "intermediate" | "ending";
+export type StateType = "normal" | "opening" | "intermediate" | "ending";
 export type HintData = { attempts: number; text: string };
 export interface ProjectStateData extends ProjectConstruct {
     title:          string;
@@ -135,11 +135,12 @@ export interface ProjectMinimapLocationData extends ProjectConstruct {
 }
 export type MinimapObjectType = "circle" | "vector";
 export interface ProjectMinimapObjectData extends ProjectConstruct {
-    devName: string;
-    type:    MinimapObjectType;
-    args:    [number, number][];  
-    dialog:  string; // Dialog text when clicked
-    object:  string; // Referenced object
+    devName:    string;
+    type:        MinimapObjectType;
+    args:        [number, number][];  
+    dialog:      string; // Dialog text when clicked
+    object:      string; // Referenced object
+    interaction: string; // Executed interaction (with criteria)
 }
 export type InteractionCriteriaType = "flagEquals" | "flagNotEquals" | "restraintWearing" | "restraintNotWearing" | "objectFound" | "objectNotFound" | "exceededAttempts";
 export interface ProjectInteractionCriteriaData extends ProjectConstruct {

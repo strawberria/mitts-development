@@ -10,11 +10,14 @@
     let actionsChoiceData: ChoiceData<string>[] = [];
     $: {
         $projectStore.data.actions;
-        actionsChoiceData = $projectStore.data.actions.ordering
-            .map(id => {
-                const data = $projectStore.data.actions.data[id];
-                return { key: data.id, display: data.name, enabled: true };
-            });
+        actionsChoiceData = [
+            { key: "examine", display: "Examine", enabled: true },
+            ...$projectStore.data.actions.ordering
+                .map(id => {
+                    const data = $projectStore.data.actions.data[id];
+                    return { key: data.id, display: data.name, enabled: true };
+                })
+        ];
     }
 
     let componentsChoiceData: ChoiceData<string>[] = [];

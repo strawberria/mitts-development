@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { LoadImage } from "../../wailsjs/go/main/Bridge";
     import IconButton from "../components/IconButton.svelte";
     import FormGrouping from "../components/FormGrouping.svelte";
     import LabelSelect from "../components/LabelSelect.svelte";
-    import { ChoiceData, hashSHA256, MinimapObjectType, ProjectMinimapObjectData, projectStore } from "../miscellaneous";
-    import { LoadImage } from "../../wailsjs/go/main/Bridge";
     import LabelTextArea from "../components/LabelTextArea.svelte";
     import LabelTextInput from "../components/LabelTextInput.svelte";
+    import { ChoiceData, hashSHA256, MinimapObjectType, ProjectMinimapObjectData, projectStore } from "../miscellaneous";
 
     export let selectedStateID: string;
     export let selectedMinimapLocationID: string | undefined;
@@ -37,15 +37,30 @@
         { key: "circle", display: "Circle", enabled: true },
         { key: "vector", display: "Vector", enabled: true },
     ];
+
     let objectsChoiceData: ChoiceData<string>[] = [];
     $: {
-        // Allow selecting of no objects to only popup dialog
+        // Allow selecting of no object to only show popup dialog
         $projectStore.storage.objects;
         objectsChoiceData = [
             { key: "", display: "", enabled: true},
             ...$projectStore.storage.objects.ordering
             .map(id => {
                 const data = $projectStore.storage.objects.data[id];
+                return { key: data.id, display: data.devName, enabled: true };
+            }),
+        ];
+    }
+
+    let interactionsChoiceData: ChoiceData<string>[] = [];
+    $: {
+        // Allow selecting of no interaction
+        $projectStore.storage.states.data[selectedStateID].interactions;
+        interactionsChoiceData = [
+            { key: "", display: "", enabled: true},
+            ...$projectStore.storage.states.data[selectedStateID].interactions.ordering
+            .map(id => {
+                const data = $projectStore.storage.states.data[selectedStateID].interactions.data[id];
                 return { key: data.id, display: data.devName, enabled: true };
             }),
         ];
@@ -297,6 +312,11 @@
                         disabled={false}
                         choicesData={objectsChoiceData}
                         bind:selected={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[selectedMinimapObjectID].object} />
+                    <LabelSelect class="w-full" 
+                        label={"Executed Interaction"} 
+                        disabled={false}
+                        choicesData={interactionsChoiceData}
+                        bind:selected={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[selectedMinimapObjectID].interaction} />
                     <LabelTextArea class="w-full" 
                         bind:value={$projectStore.storage.states.data[selectedStateID].locations.data[selectedMinimapLocationID].minimapObjects.data[selectedMinimapObjectID].dialog} 
                         label={"Popup Dialog"}

@@ -14,7 +14,6 @@
     let stateTypeChoices: ChoiceData<StateType>[] = [
         { key: "normal", display: "Normal", enabled: true },
         { key: "opening", display: "Opening", enabled: true },
-        { key: "starting", display: "Starting", enabled: true },
         { key: "intermediate", display: "Intermediate", enabled: true },
         { key: "ending", display: "Ending", enabled: true },
     ];
@@ -23,9 +22,6 @@
         stateTypeChoices[1].enabled = Object.values($projectStore.storage.states.data)
             .findIndex(d => d.type === "opening") === -1
             || $projectStore.storage.states.data[selectedStateID].type === "opening";
-        stateTypeChoices[2].enabled = Object.values($projectStore.storage.states.data)
-            .findIndex(d => d.type === "starting") === -1
-            || $projectStore.storage.states.data[selectedStateID].type === "starting";
     }
 
     let stateChoiceData: ChoiceData<string>[] = [];

@@ -105,18 +105,11 @@
 
     // Start game by advancing state from opening to starting
     function startAdvanceOpening() {
-        debugLog(`[RUN] Starting game, transitioning to next opening / starting state...`);
+        debugLog(`[RUN] Opening or intermediate state, transitioning to next...`);
 
-        const statesData = Object.entries(gameData.storage.states.data);
-        const currentOpeningIndex = statesData.findIndex(v => v[0] === $runtimeStore.currentStateID);
-        const nextStateData = statesData[currentOpeningIndex+1][1];
-        if(nextStateData !== undefined && nextStateData.type === "intermediate") {
-            // Advance to next intermediate scene?
-            $runtimeStore.currentStateID = nextStateData.id;
-        } else {
-            $runtimeStore.currentStateID = Object.entries(gameData.storage.states.data)
-                .filter(([id, data]) => data.type === "starting")[0][0];    
-        }
+        const currentStateData = gameData.storage.states.data[$runtimeStore.currentStateID];
+        const nextStateID = currentStateData.args[0];
+        $runtimeStore.currentStateID = nextStateID;
     }
 
     // Map restraints from list of IDs to location-id/name mappings for ease of access
@@ -174,6 +167,16 @@
                 // Add object if defined
                 if(minimapObjectData.object !== "") { addFoundObject(minimapObjectData.object) }
                 if(minimapObjectData.dialog !== "") { showDialog(minimapObjectData.dialog) }
+
+                // Execute interaction if interaction defined and criteria passed
+                if(minimapObjectData.interaction !== "") {
+                    const interactionData = gameData.storage.states.data[$runtimeStore.currentStateID].interactions.data[minimapObjectData.interaction];
+                    const criteriasPassed = checkInteractionCriteriaAll(interactionData);
+                    if(criteriasPassed === true) {
+                        // Execute individual interaction results
+                        executeInteraction(interactionData);
+                    }
+                }
 
                 // Only handle first clicked
                 return;
@@ -316,31 +319,8 @@
             ? undefined : actionID;
     }
 
-    // Checks whether the passed interaction has all components and criteria met
-    function checkInteractionCriteria(actionData: ProjectActionData, interactionData: ProjectInteractionData, checkAttempts: boolean): boolean {
-        // Immediately return if checkAttempts doesn't match existence of exceededAttempts criteria
-        if(checkAttempts !== Object.values(interactionData.criteria.data)
-            .filter(criteriaData => criteriaData.type === "exceededAttempts")
-            .length > 0) { return false; }
-
-        // debugLog(`[RUN] checkInteractionCriteria - comparing (${interactionData.action} / ${$runtimeStore.selectedActionID} @ order, two = ${actionData.order}, ${actionData.two}) 0 = [${interactionData.components[0]} / ${$runtimeStore.selectedComponentIDs[0]}] 1 = [${interactionData.components[1]} / ${$runtimeStore.selectedComponentIDs[1]}]`);
-
-        // Check whether actions and components match (including toggles)
-        if(checkAttempts === false) {
-            if(interactionData.action !== $runtimeStore.selectedActionID) { return false; }
-            if(interactionData.components[0] !== $runtimeStore.selectedComponentIDs[0]) {
-                // If order matters, immediately return doesn't match
-                if(actionData.order === true) { return false; }
-                if(interactionData.components[1] !== $runtimeStore.selectedComponentIDs[0]) { return false; }
-            }
-            if(interactionData.components[1] !== $runtimeStore.selectedComponentIDs[1]) {
-                // If order matters, immediately return doesn't match
-                if(actionData.order === true) { return false; }
-                if(interactionData.components[0] !== $runtimeStore.selectedComponentIDs[1]) { return false; }
-            }
-        }
-
-        // Iterate through criteria and check whether they are matched
+    // Checks whether individual criteria are met
+    function checkInteractionCriteriaAll(interactionData: ProjectInteractionData) {
         const criteriasPassed = interactionData.criteria.ordering.map(
             (criteriaID) => {
                 const criteriaData = interactionData.criteria.data[criteriaID];
@@ -366,15 +346,45 @@
                     case "restraintNotWearing": {
                         passedCriteria = $runtimeStore.currentRestraintIDs.findIndex(v => v === criteriaData.args[0]) === -1;
                     } break;
-                    case "exceededAttempts": {
-                        passedCriteria = checkAttempts && $runtimeStore.currentAttempts >= criteriaData.args[0];
-                        debugLog(`exceededAttempts check: ${passedCriteria}`)
-                    } break;
+                    // case "exceededAttempts": {
+                    //     passedCriteria = checkAttempts && $runtimeStore.currentAttempts >= criteriaData.args[0];
+                    //     debugLog(`exceededAttempts check: ${passedCriteria}`)
+                    // } break;
                 }
 
                 return passedCriteria;
             }
         ).every(v => v === true);
+
+        return criteriasPassed;
+    }
+
+    // Checks whether the passed interaction has all components and criteria met
+    function checkInteractionCriteria(actionData: ProjectActionData, interactionData: ProjectInteractionData, checkAttempts: boolean): boolean {
+        // Immediately return if checkAttempts doesn't match existence of exceededAttempts criteria
+        if(checkAttempts !== Object.values(interactionData.criteria.data)
+            .filter(criteriaData => criteriaData.type === "exceededAttempts")
+            .length > 0) { return false; }
+
+        // debugLog(`[RUN] checkInteractionCriteria - comparing (${interactionData.action} / ${$runtimeStore.selectedActionID} @ order, two = ${actionData.order}, ${actionData.two}) 0 = [${interactionData.components[0]} / ${$runtimeStore.selectedComponentIDs[0]}] 1 = [${interactionData.components[1]} / ${$runtimeStore.selectedComponentIDs[1]}]`);
+
+        // Check whether actions and components match (including toggles)
+        if(checkAttempts === false) {
+            if(interactionData.action !== $runtimeStore.selectedActionID) { return false; }
+            if(interactionData.components[0] !== $runtimeStore.selectedComponentIDs[0]) {
+                // If order matters, immediately return doesn't match
+                if(actionData.order === true) { return false; }
+                if(interactionData.components[1] !== $runtimeStore.selectedComponentIDs[0]) { return false; }
+            }
+            if(interactionData.components[1] !== $runtimeStore.selectedComponentIDs[1]) {
+                // If order matters, immediately return doesn't match
+                if(actionData.order === true) { return false; }
+                if(interactionData.components[0] !== $runtimeStore.selectedComponentIDs[1]) { return false; }
+            }
+        }
+
+        // Iterate through criteria and check whether they are matched
+        const criteriasPassed = checkInteractionCriteriaAll(interactionData)
 
         return criteriasPassed;
     }
@@ -451,11 +461,18 @@
         $runtimeStore.selectedComponentIDs[$runtimeStore.selectedComponentIDs[0] === "" ? 0 : 1] = objectID;
         $runtimeStore.selectedComponentIDs = $runtimeStore.selectedComponentIDs;
 
-
-        const actionData = gameData.data.actions.data[$runtimeStore.selectedActionID];
+        const actionData: ProjectActionData = $runtimeStore.selectedActionID !== "examine"
+            ? gameData.data.actions.data[$runtimeStore.selectedActionID]
+            : {
+                id: "examine",
+                name: "Examine",
+                verb: "",
+                order: true,
+                two: false
+            };
 
         // Edge case: handle examining separately, ignore any examines regarding restraint location
-        if($runtimeStore.selectedActionID === "examine" && $runtimeStore.selectedComponentIDs[0] !== undefined) {
+        if($runtimeStore.selectedActionID === "examine" && $runtimeStore.selectedComponentIDs[0] !== "") {
             // Disallow examining restraint locations, just examine the restraints insteacd
             if(gameData.data.restraintLocations.ordering.includes($runtimeStore.selectedComponentIDs[0]) === false) {
                 const examineText: string | undefined = gameData.storage.objects.data[$runtimeStore.selectedComponentIDs[0]]
@@ -470,15 +487,9 @@
                     showDialog(examineText);
                 }
             }
-
-            $runtimeStore.selectedActionID = undefined;
-            $runtimeStore.selectedComponentIDs = ["", ""];
-            
-            return;
         }
 
         // Check whether combination matches any interactions and their criteria
-        let interactionFound = false;
         let clear = actionData.two === false || ($runtimeStore.selectedComponentIDs[0] !== "" && $runtimeStore.selectedComponentIDs[1] !== "");
         for(const interactionID of gameData.storage.states.data[$runtimeStore.currentStateID].interactions.ordering) {
             // Retrieve interaction data and filter action and components
@@ -488,28 +499,23 @@
                 continue;
             }
 
-            debugLog(`[RUN] handleObjectClick - criteria(s) passed (attempts = false), executing interaction [${interactionID} - ${interactionData.devName}]`);
+            debugLog(`[RUN] handleObjectClick - criteria(s) passed, executing interaction [${interactionID} - ${interactionData.devName}]`);
 
             // Criteria(s) passed, backup then execute results
-            interactionFound = true;
-            clear = true;
             // backupRuntimeData();
             executeInteraction(interactionData);
 
             // Clear once interaction found
-            if(interactionFound === true) {
-                $runtimeStore.selectedActionID = undefined;
-                $runtimeStore.selectedComponentIDs = ["", ""];
-                break;
-            }
+            $runtimeStore.selectedActionID = undefined;
+            $runtimeStore.selectedComponentIDs = ["", ""];
+            
+            return;
         }
 
-        if(interactionFound === false) {
-            debugLog(`[RUN] handleObjectClick - found no interactions matching all criteria`);
-        }
+        debugLog(`[RUN] handleObjectClick - found no interactions matching all criteria`);
 
         // Show "you can't do that" placeholder dialog
-        if(interactionFound === false && clear === true) {
+        if(clear === true) {
             // Increment current attempts
             $runtimeStore.currentAttempts++;
             for(const interactionID of gameData.storage.states.data[$runtimeStore.currentStateID].interactions.ordering) {
@@ -530,7 +536,9 @@
             debugLog(`[RUN] handleObjectClick - clearing since no interaction found`);
 
             // Only add dialog if not already there
-            $runtimeStore.dialogText = "You can't do that!"
+            if($runtimeStore.selectedActionID !== "examine") {
+                $runtimeStore.dialogText = "You can't do that!";
+            }
             $runtimeStore.selectedActionID = undefined;
             $runtimeStore.selectedComponentIDs = ["", ""];
         }
@@ -582,8 +590,7 @@
 <div class="flex flex-row items-stretch space-x-4
 	grow min-h-0 p-4
     text-slate-400">
-	{#if gameData.storage.states.data[$runtimeStore.currentStateID].type === "starting"
-        || gameData.storage.states.data[$runtimeStore.currentStateID].type === "normal"}
+	{#if gameData.storage.states.data[$runtimeStore.currentStateID].type === "normal"}
         <FormGrouping class="w-1/4 h-full">
             <svelte:fragment slot="content">
                 <div class="h-full flex flex-col items-start">

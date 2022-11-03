@@ -24,10 +24,9 @@
     <div class="grow flex flex-row items-center space-x-3 basis-0 shrink min-w-0">
         <p class="font-mono font-bold text-l w-4">
             {stateData.type === "opening"
-                ? "O" : stateData.type === "starting"
-                    ? "S" : stateData.type === "ending"
-                        ? "E" : stateData.type === "intermediate"
-                            ? "I" : ""}
+                ? "O" : stateData.type === "ending"
+                    ? "E" : stateData.type === "intermediate"
+                        ? "I" : ""}
         </p>
         <p class="text-left w-11/12 min-w-0 truncate">{stateData.title}</p>
     </div>
