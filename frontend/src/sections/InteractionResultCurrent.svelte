@@ -48,7 +48,6 @@
         locationChoiceData = $projectStore.storage.states.data[selectedStateID].locations.ordering
             .map(id => {
                 const data = $projectStore.storage.states.data[selectedStateID].locations.data[id];
-                console.log(data)
                 return { key: data.id, display: data.devName, enabled: true };
             });
     }

@@ -33,7 +33,7 @@
         bind:selectedWindow={selectedWindow}
         bind:show={show} />
     {#if $playStore === true}
-        <GameRuntime />
+        <GameRuntime debug={true} />
     {:else if show === true}
         <NavigationTabs navigationData={navigationData}
             bind:selectedWindow={selectedWindow}

@@ -7,22 +7,39 @@
     import type { ProjectActionData, ProjectInteractionData } from "./miscellaneous";
     import { projectStore } from "./miscellaneous";
 
+    export let debug: boolean = false;
     const gameData = $projectStore;
-    // import { ProjectData } from "./miscellaneous";
-    // export const gameData: ProjectData;
 
-    console.log("[RUN] Performing initialization...");
+    function debugLog(message: string) {
+        if(debug) { console.log(message) }
+    }
+
+    debugLog("[RUN] Performing initialization...");
 
     // Find and set initial state - reset here when restarting
     const openingStateID = Object.entries(gameData.storage.states.data)
         .filter(([id, data]) => data.type === "opening")[0][0];
-    const startingStateID = Object.entries(gameData.storage.states.data)
-        .filter(([id, data]) => data.type === "starting")[0][0];
-
     const openingStateData = gameData.storage.states.data[openingStateID];
-    const startingStateData = gameData.storage.states.data[startingStateID];
-    console.log(`[RUN] Found opening state: [${openingStateID} - ${openingStateData.title}]`);
-    console.log(`[RUN] Found starting state: [${startingStateID} - ${startingStateData.title}]`);
+    debugLog(`[RUN] Found opening state: [${openingStateID} - ${openingStateData.title}]`);
+
+    // Find starting state by traversing opening states and pointers - check for loop
+    const traversedStates: Set<string> = new Set();
+    let startingStateID = openingStateID;
+    while(true) {
+        const currentState = gameData.storage.states.data[startingStateID];
+        if(currentState.args[0] === undefined) {
+            throw new Error(`Error: couldn't find starting state`);
+        } else if(traversedStates.has(currentState.args[0]) === true) {
+            throw new Error(`Error: loop detected in states`);
+        }
+        traversedStates.add(currentState.args[0])
+        startingStateID = currentState.args[0];
+
+        const nextStateData = gameData.storage.states.data[startingStateID];
+        if(nextStateData.type !== "intermediate") {
+            break;
+        }
+    }
 
     // Find and set initial minimap location and restraints - reset here when restarting
     let initialMinimapLocation: string = "";
@@ -42,7 +59,7 @@
     for(const initialRestraintID of initialRestraintIDs) {
         const initialRestraintData = gameData.storage.restraints.data[initialRestraintID];
         const restraintLocationData = gameData.data.restraintLocations.data[initialRestraintData.location];
-        console.log(`[RUN] Found initial restraint: [${initialRestraintID} - ${initialRestraintData.devName}] @ [${restraintLocationData.id} - ${restraintLocationData.name}]`);
+        debugLog(`[RUN] Found initial restraint: [${initialRestraintID} - ${initialRestraintData.devName}] @ [${restraintLocationData.id} - ${restraintLocationData.name}]`);
     }
 
     // Canvas-related declarations
@@ -72,28 +89,27 @@
     };
     const runtimeStore = writable<typeof initialRuntimeData>(JSON.parse(JSON.stringify(initialRuntimeData)));
     $runtimeStore = initialRuntimeData; // Parsing causes issues?
-    const backupRuntimesStore: Writable<(typeof initialRuntimeData)[]> = writable([]);
+    // const backupRuntimesStore: Writable<(typeof initialRuntimeData)[]> = writable([]);
 
-    window["gameData"] = gameData;
-    window["runtimeStore"] = $runtimeStore;
-    console.log("[RUN] Tip - reference $runtimeStore for debugging through window.runtimeStore");
-    console.log(window["runtimeStore"]);
+    (window as any)["gameData"] = gameData;
+    (window as any)["runtimeStore"] = $runtimeStore;
+    debugLog("[RUN] Tip - reference $runtimeStore for debugging through window.runtimeStore");
+    debugLog(window["runtimeStore"]);
 
     // Restarts game by resetting all data to runtime initial
     function restartGame() {
-        console.log(`[RUN] Restarting game...`);
+        debugLog(`[RUN] Restarting game...`);
 
         $runtimeStore = initialRuntimeData;
     }
 
     // Start game by advancing state from opening to starting
     function startAdvanceOpening() {
-        console.log(`[RUN] Starting game, transitioning to next opening / starting state...`);
+        debugLog(`[RUN] Starting game, transitioning to next opening / starting state...`);
 
         const statesData = Object.entries(gameData.storage.states.data);
         const currentOpeningIndex = statesData.findIndex(v => v[0] === $runtimeStore.currentStateID);
         const nextStateData = statesData[currentOpeningIndex+1][1];
-        console.log(nextStateData)
         if(nextStateData !== undefined && nextStateData.type === "intermediate") {
             // Advance to next intermediate scene?
             $runtimeStore.currentStateID = nextStateData.id;
@@ -127,7 +143,7 @@
         const clickCoordX = event.clientX - boundingRect.left;
         const clickCoordY = event.clientY - boundingRect.top;
 
-        console.log(`[RUN] handleMinimapClick - click coordinates (${clickCoordX} / ${boundingRect.width}, ${clickCoordY} / ${boundingRect.height})`);
+        debugLog(`[RUN] handleMinimapClick - click coordinates (${clickCoordX} / ${boundingRect.width}, ${clickCoordY} / ${boundingRect.height})`);
 
         // Iterate over minimap objects, drawing paths and checking inclusion
         for(const minimapObjectData of gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[$runtimeStore.currentMinimapLocationID].minimapObjects.ordering
@@ -153,7 +169,7 @@
 
             // Check whether the click point is within the path
             if(canvasContext.isPointInPath(path, clickCoordX, clickCoordY)) {
-                console.log(`[RUN] handleMinimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
+                debugLog(`[RUN] handleMinimapClick - found click location within minimap [${minimapObjectData.id} - ${minimapObjectData.devName}]`);
 
                 // Add object if defined
                 if(minimapObjectData.object !== "") { addFoundObject(minimapObjectData.object) }
@@ -164,12 +180,12 @@
             }
         }
 
-        console.log(`[RUN] handleMinimapClick - found no minimap objects at click location`);
+        debugLog(`[RUN] handleMinimapClick - found no minimap objects at click location`);
     }
 
     function addFoundObject(objectID: string) { 
         const objectData = gameData.storage.objects.data[objectID];
-        console.log(`[RUN] addFoundObject - [${objectID} - ${objectData.devName}]`);
+        debugLog(`[RUN] addFoundObject - [${objectID} - ${objectData.devName}]`);
 
         // Don't add object if already there
         if($runtimeStore.revealedObjectIDs.findIndex(v => v === objectID) !== -1) { return; }
@@ -180,7 +196,7 @@
     }
     function hideObject(objectID: string) {
         const objectData = gameData.storage.objects.data[objectID];
-        console.log(`[RUN] hideObject - [${objectID} - ${objectData.devName}]`);
+        debugLog(`[RUN] hideObject - [${objectID} - ${objectData.devName}]`);
 
         // Assume that found objects are already sorted
         $runtimeStore.revealedObjectIDs = $runtimeStore.revealedObjectIDs.filter(v => v !== objectID);
@@ -189,12 +205,12 @@
         // Don't add restraint if already there
         const restraintData = gameData.storage.restraints.data[restraintID];
         if($runtimeStore.currentRestraintIDs.findIndex(v => v === restraintID) !== -1) { 
-            console.log(`[RUN] addRestraint - already wearing [${restraintID} - ${restraintData.devName}], not adding`);
+            debugLog(`[RUN] addRestraint - already wearing [${restraintID} - ${restraintData.devName}], not adding`);
 
             return; 
         }
 
-        console.log(`[RUN] addRestraint - [${restraintID} - ${restraintData.devName}]`);
+        debugLog(`[RUN] addRestraint - [${restraintID} - ${restraintData.devName}]`);
 
         $runtimeStore.currentRestraintIDs.push(restraintID);
         $runtimeStore.currentRestraintIDs.sort((a, b) => gameData.storage.restraints.ordering.findIndex(v => v === a) - gameData.storage.restraints.ordering.findIndex(v => v === b));
@@ -202,7 +218,7 @@
     }
     function removeRestraint(restraintID: string) {
         const restraintData = gameData.storage.restraints.data[restraintID];
-        console.log(`[RUN] removeRestraint - [${restraintID} - ${restraintData.devName}]`);
+        debugLog(`[RUN] removeRestraint - [${restraintID} - ${restraintData.devName}]`);
 
         // Assume that current restraints are already sorted
         $runtimeStore.currentRestraintIDs = $runtimeStore.currentRestraintIDs.filter(v => v !== restraintID);
@@ -210,12 +226,12 @@
     function addLocation(locationID: string) {
         const locationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[locationID];
         if($runtimeStore.availableMinimapLocations.findIndex(v => v === locationID) !== -1) {
-            console.log(`[RUN] addLocation - already has location [${locationData.devName}], not adding`);
+            debugLog(`[RUN] addLocation - already has location [${locationData.devName}], not adding`);
 
             return; 
         }
 
-        console.log(`[RUN] addLocation - ${locationData.devName}`);
+        debugLog(`[RUN] addLocation - ${locationData.devName}`);
 
         $runtimeStore.availableMinimapLocations.push(locationID);
         $runtimeStore.availableMinimapLocations = $runtimeStore.availableMinimapLocations;
@@ -225,7 +241,7 @@
     }
     function removeLocation(locationID: string) {
         const locationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[locationID];
-        console.log(`[RUN] removeRestraint - ${locationData.devName}`);
+        debugLog(`[RUN] removeRestraint - ${locationData.devName}`);
 
         $runtimeStore.availableMinimapLocations = $runtimeStore.availableMinimapLocations.filter(v => v !== locationID);
 
@@ -236,36 +252,36 @@
         }
     }
     function showDialog(newDialogText: string) {
-        console.log(`[RUN] showDialog - displaying dialog [${newDialogText}]`);
+        debugLog(`[RUN] showDialog - displaying dialog [${newDialogText}]`);
 
         // Only add to queue if not already shown
         $runtimeStore.dialogText = newDialogText
     }
     function hideDialog() {
-        console.log(`[RUN] hideDialog - hiding dialog text if shown`);
+        debugLog(`[RUN] hideDialog - hiding dialog text if shown`);
 
         $runtimeStore.dialogText = undefined;
     }
     function resetAttempts() {
-        console.log(`[RUN] resetAttempts - resetting number of attempts to 0`);
+        debugLog(`[RUN] resetAttempts - resetting number of attempts to 0`);
 
         $runtimeStore.currentAttempts = 0;
     }
 
     // Backup runtime data for undoing
-    function backupRuntimeData() {
-        console.log(`[RUN] backupRuntimeData - backing-up data for later undoing`);
+    // function backupRuntimeData() {
+    //     debugLog(`[RUN] backupRuntimeData - backing-up data for later undoing`);
 
-        // Parse and stringify to perform deep copy of underlying
-        $backupRuntimesStore.push(JSON.parse(JSON.stringify($runtimeStore)));
-        $backupRuntimesStore = $backupRuntimesStore; // Necessary?
-    }
+    //     // Parse and stringify to perform deep copy of underlying
+    //     $backupRuntimesStore.push(JSON.parse(JSON.stringify($runtimeStore)));
+    //     $backupRuntimesStore = $backupRuntimesStore; // Necessary?
+    // }
     // Restore runtime data from backup runtime store
     // function restoreRuntimeData() {
     //     // Immediately return if no backup found (shouldn't happen)
     //     if($backupRuntimesStore.length === 0) { return; }
 
-    //     console.log(`[RUN] restoreRuntimeData - undoing and restoring runtime data from backup`);
+    //     debugLog(`[RUN] restoreRuntimeData - undoing and restoring runtime data from backup`);
     //     $runtimeStore = $backupRuntimesStore.pop();
     //     $backupRuntimesStore = $backupRuntimesStore; // Necessary?
 
@@ -291,9 +307,9 @@
         $runtimeStore.selectedComponentIDs = ["", ""];
         if(actionID !== "examine") {
             const actionData = gameData.data.actions.data[actionID];
-            console.log(`[RUN] handleActionClick - [${actionID} - ${actionData.name}]`);
+            debugLog(`[RUN] handleActionClick - [${actionID} - ${actionData.name}]`);
         } else {
-            console.log(`[RUN] handleActionClick - [examine]`);
+            debugLog(`[RUN] handleActionClick - [examine]`);
         }
 
         $runtimeStore.selectedActionID = actionID === $runtimeStore.selectedActionID
@@ -307,7 +323,7 @@
             .filter(criteriaData => criteriaData.type === "exceededAttempts")
             .length > 0) { return false; }
 
-        // console.log(`[RUN] checkInteractionCriteria - comparing (${interactionData.action} / ${$runtimeStore.selectedActionID} @ order, two = ${actionData.order}, ${actionData.two}) 0 = [${interactionData.components[0]} / ${$runtimeStore.selectedComponentIDs[0]}] 1 = [${interactionData.components[1]} / ${$runtimeStore.selectedComponentIDs[1]}]`);
+        // debugLog(`[RUN] checkInteractionCriteria - comparing (${interactionData.action} / ${$runtimeStore.selectedActionID} @ order, two = ${actionData.order}, ${actionData.two}) 0 = [${interactionData.components[0]} / ${$runtimeStore.selectedComponentIDs[0]}] 1 = [${interactionData.components[1]} / ${$runtimeStore.selectedComponentIDs[1]}]`);
 
         // Check whether actions and components match (including toggles)
         if(checkAttempts === false) {
@@ -352,17 +368,13 @@
                     } break;
                     case "exceededAttempts": {
                         passedCriteria = checkAttempts && $runtimeStore.currentAttempts >= criteriaData.args[0];
-                        console.log(`exceededAttempts check: ${passedCriteria}`)
+                        debugLog(`exceededAttempts check: ${passedCriteria}`)
                     } break;
                 }
 
                 return passedCriteria;
             }
         ).every(v => v === true);
-
-        if(checkAttempts === true) {
-            console.log(criteriasPassed)
-        }
 
         return criteriasPassed;
     }
@@ -439,15 +451,17 @@
         if($runtimeStore.selectedActionID === "examine" && $runtimeStore.selectedComponentIDs[0] !== undefined) {
             // Disallow examining restraint locations, just examine the restraints insteacd
             if(gameData.data.restraintLocations.ordering.includes($runtimeStore.selectedComponentIDs[0]) === false) {
-                const examineText = gameData.storage.objects.data[$runtimeStore.selectedComponentIDs[0]]
+                const examineText: string | undefined = gameData.storage.objects.data[$runtimeStore.selectedComponentIDs[0]]
                     ? gameData.storage.objects.data[$runtimeStore.selectedComponentIDs[0]].examine
                     : gameData.storage.restraints.data[$runtimeStore.selectedComponentIDs[0]]
                         ? gameData.storage.restraints.data[$runtimeStore.selectedComponentIDs[0]].examine
                         : undefined;
 
-                console.log(`[RUN] handleObjectClick - handling object/restraint examine action [${$runtimeStore.selectedComponentIDs[0]} - ${examineText}]`);
+                debugLog(`[RUN] handleObjectClick - handling object/restraint examine action [${$runtimeStore.selectedComponentIDs[0]} - ${examineText}]`);
 
-                showDialog(examineText);
+                if(examineText !== undefined) {
+                    showDialog(examineText);
+                }
             }
 
             $runtimeStore.selectedActionID = undefined;
@@ -467,12 +481,12 @@
                 continue;
             }
 
-            console.log(`[RUN] handleObjectClick - criteria(s) passed (attempts = false), executing interaction [${interactionID} - ${interactionData.devName}]`);
+            debugLog(`[RUN] handleObjectClick - criteria(s) passed (attempts = false), executing interaction [${interactionID} - ${interactionData.devName}]`);
 
             // Criteria(s) passed, backup then execute results
             interactionFound = true;
             clear = true;
-            backupRuntimeData();
+            // backupRuntimeData();
             executeInteraction(interactionData);
 
             // Clear once interaction found
@@ -484,7 +498,7 @@
         }
 
         if(interactionFound === false) {
-            console.log(`[RUN] handleObjectClick - found no interactions matching all criteria`);
+            debugLog(`[RUN] handleObjectClick - found no interactions matching all criteria`);
         }
 
         // Show "you can't do that" placeholder dialog
@@ -498,7 +512,7 @@
                 if(criteriasPassed === false) {
                     continue;
                 }
-                console.log(`[RUN] handleObjectClick - criteria(s) passed (attempts = true), executing interaction [${interactionID} - ${interactionData.devName}]`);
+                debugLog(`[RUN] handleObjectClick - criteria(s) passed (attempts = true), executing interaction [${interactionID} - ${interactionData.devName}]`);
 
                 // Criteria(s) passed, now execute results
                 executeInteraction(interactionData);
@@ -506,7 +520,7 @@
                 break;
             }
 
-            console.log(`[RUN] handleObjectClick - clearing since no interaction found`);
+            debugLog(`[RUN] handleObjectClick - clearing since no interaction found`);
 
             // Only add dialog if not already there
             $runtimeStore.dialogText = "You can't do that!"
@@ -522,7 +536,7 @@
         const hintIndex = parseInt(event.detail.key);
         const hintText = `Hint: ${gameData.storage.states.data[$runtimeStore.currentStateID].hints[hintIndex].text}`;
 
-        console.log(`[RUN] handleHintClick - displaying hint text (as dialog) [${hintIndex} - ${hintText}]`);
+        debugLog(`[RUN] handleHintClick - displaying hint text (as dialog) [${hintIndex} - ${hintText}]`);
 
         $runtimeStore.dialogText = hintText;
     }
@@ -542,7 +556,7 @@
     runtimeStore.subscribe(v => {
         if(v.selectedActionID === "examine") {
             actionName = "Examine";
-        } else {
+        } else if(v.selectedActionID !== undefined) {
             const actionData = gameData.data.actions.data[v.selectedActionID];
             actionName = actionData !== undefined ? actionData.name : undefined;
             actionVerb = actionData !== undefined ? actionData.verb : undefined;

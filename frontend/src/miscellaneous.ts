@@ -25,7 +25,7 @@ export async function hashSHA256(data: string): Promise<string> {
     return hash
 }
 
-export const version = "1.8.1";
+export const version = "1.9.0";
 export const idLength = 8;
 export const playStore: Writable<boolean> = writable(false);
 export const stateStore: Writable<string | undefined> = writable<string>(undefined);

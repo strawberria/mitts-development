@@ -34,7 +34,7 @@
         // Don't allow changing back to opening state? I dunno
         stateChoiceData = $projectStore.storage.states.ordering
             .map(id => $projectStore.storage.states.data[id])
-            // .filter(data => data.type !== "opening")
+            .filter(data => data.type !== "opening" && data.id !== selectedStateID)
             .map(data => {
                 return { key: data.id, display: data.title, enabled: true };
             });
@@ -125,7 +125,8 @@
                     </div>
                 {/each}
                 <div class="grow" />
-                {#if $projectStore.storage.states.data[selectedStateID].type === "intermediate"}
+                {#if $projectStore.storage.states.data[selectedStateID].type === "intermediate"
+                    || $projectStore.storage.states.data[selectedStateID].type === "opening"}
                     <LabelSelect class="w-1/2" 
                         label={"Next State"} 
                         choicesData={stateChoiceData}
