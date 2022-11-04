@@ -410,8 +410,6 @@
                     $runtimeStore.currentStateID = resultData.args[0];
                     $runtimeStore.currentAttempts = 0;
                     
-                    console.log(JSON.stringify(resultData))
-
                     for(const minimapLocationID of gameData.storage.states.data[$runtimeStore.currentStateID].locations.ordering) {
                         const minimapLocationData = gameData.storage.states.data[$runtimeStore.currentStateID].locations.data[minimapLocationID];
                         if(minimapLocationData.initial === true) {
