@@ -49,7 +49,7 @@
             {/if}
         </div>
         <div class="flex flex-col space-y-4
-            h-full" style="width: 30%">
+            h-full" style="width: 30%; min-width: 30%">
             {#if selectedInteractionID !== undefined}
                 <InteractionCriteriaSelector class="h-1/3" 
                     selectedStateID={$stateStore}
@@ -63,7 +63,7 @@
             {/if}
         </div>
         <div class="flex flex-col space-y-4
-            h-full" style="width: 30%">
+            h-full" style="width: 30%; min-width: 30%">
             {#if selectedInteractionID !== undefined}
                 <InteractionResultSelector class="h-1/3" 
                     selectedStateID={$stateStore}

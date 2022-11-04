@@ -62,6 +62,36 @@
             });
     }
 
+    let previousNextStateID: string | undefined = undefined;
+    let nextStateLocationData: ChoiceData<string>[] = [];
+    $: {
+        $projectStore.storage.states;
+        $projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID];
+        if($projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID] !== undefined) {
+            if(resultType === "setState") {
+                if($projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0] !== previousNextStateID) {
+                    previousNextStateID = $projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0];
+                }
+
+                const nextStateData = $projectStore.storage.states.data[previousNextStateID];
+                if(nextStateData !== undefined) {
+                    nextStateLocationData = [
+                        { key: "", display: "", enabled: true },
+                        ...nextStateData.locations.ordering
+                            .map(id => {
+                                const data = nextStateData.locations.data[id];
+                                return { key: data.id, display: data.devName, enabled: true };
+                            }),
+                    ];
+                } else {
+                    nextStateLocationData = [{ key: "", display: "", enabled: true }];
+                }
+            } else {
+                previousNextStateID = undefined;
+            }
+        }
+    }
+
     let previousResultID: string;
     let resultType: InteractionResultType;
     $: {
@@ -127,6 +157,12 @@
                         disabled={false}
                         choicesData={stateChoiceData}
                             bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0]} />
+                    <LabelSelect class="w-1/2" 
+                        label={"Starting Location"} 
+                        disabled={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0] === undefined
+                            || $projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[0] === ""}
+                        choicesData={nextStateLocationData}
+                            bind:selected={$projectStore.storage.states.data[selectedStateID].interactions.data[selectedInteractionID].results.data[selectedResultID].args[1]} />
                 {:else if resultType === "setFlag"}
                     <LabelTextInput class="w-1/2"
                         label={"Flag Name"}

@@ -34,7 +34,7 @@ export const transpileFuncs: ((projectData: any) => Promise<Object>)[] = [
 
         return projectData;
     },
-    // 1.8.0/1.8.1/1.8.2 to 1.9.0
+    // 1.8.0/1.8.1/1.8.2 to 1.9.0/1.9.1
     // - Remove starting scene designation, add pointer from opening and intermediate
     // - Add interactions for examine
     // - Add interaction execution 9with criteria) when clicking minimap object
@@ -70,7 +70,7 @@ export const transpileFuncs: ((projectData: any) => Promise<Object>)[] = [
             openingStateData.args[0] = startingStateData.id;
         }
 
-        projectData.version = "1.9.0";
+        projectData.version = "1.9.1";
 
         return projectData;
     }

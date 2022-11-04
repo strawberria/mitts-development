@@ -25,7 +25,7 @@ export async function hashSHA256(data: string): Promise<string> {
     return hash
 }
 
-export const version = "1.9.0";
+export const version = "1.9.1";
 export const idLength = 8;
 export const playStore: Writable<boolean> = writable(false);
 export const stateStore: Writable<string | undefined> = writable<string>(undefined);
@@ -135,7 +135,7 @@ export interface ProjectMinimapLocationData extends ProjectConstruct {
 }
 export type MinimapObjectType = "circle" | "vector";
 export interface ProjectMinimapObjectData extends ProjectConstruct {
-    devName:    string;
+    devName:     string;
     type:        MinimapObjectType;
     args:        [number, number][];  
     dialog:      string; // Dialog text when clicked
